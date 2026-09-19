@@ -134,10 +134,10 @@ class _BiometricScreenState extends State<BiometricScreen> with SingleTickerProv
 
                   // Face ID Select Zone
                   Positioned(
-                    top: h * 0.35,
-                    bottom: h * 0.40,
-                    left: w * 0.1,
-                    right: w * 0.5,
+                    top: h * 0.375,
+                    bottom: h * 0.465, // Tightly hugs the glass height
+                    left: w * 0.22,
+                    right: w * 0.51,
                     child: GestureDetector(
                       onTap: () {
                         HapticFeedback.lightImpact();
@@ -145,11 +145,14 @@ class _BiometricScreenState extends State<BiometricScreen> with SingleTickerProv
                       },
                       child: Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(12), // Matching the glass roundness
                           border: Border.all(
                             color: _selectedBiometric == 'face' ? Colors.white : Colors.transparent,
                             width: 2,
                           ),
+                          boxShadow: _selectedBiometric == 'face' ? [
+                            BoxShadow(color: Colors.white.withValues(alpha: 0.2), blurRadius: 10, spreadRadius: 2)
+                          ] : [],
                         ),
                       ),
                     ),
@@ -157,10 +160,10 @@ class _BiometricScreenState extends State<BiometricScreen> with SingleTickerProv
 
                   // Fingerprint Select Zone
                   Positioned(
-                    top: h * 0.35,
-                    bottom: h * 0.40,
-                    left: w * 0.5,
-                    right: w * 0.1,
+                    top: h * 0.375,
+                    bottom: h * 0.465,
+                    left: w * 0.51,
+                    right: w * 0.22,
                     child: GestureDetector(
                       onTap: () {
                         HapticFeedback.lightImpact();
@@ -168,22 +171,25 @@ class _BiometricScreenState extends State<BiometricScreen> with SingleTickerProv
                       },
                       child: Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: _selectedBiometric == 'fingerprint' ? Colors.white : Colors.transparent,
                             width: 2,
                           ),
+                          boxShadow: _selectedBiometric == 'fingerprint' ? [
+                            BoxShadow(color: Colors.white.withValues(alpha: 0.2), blurRadius: 10, spreadRadius: 2)
+                          ] : [],
                         ),
                       ),
                     ),
                   ),
 
-                  // AUTHENTICATE Button Overlay (Top Blank Button)
+                  // AUTHENTICATE Button Overlay
                   Positioned(
-                    top: h * 0.69,
-                    height: h * 0.08,
-                    left: w * 0.15,
-                    right: w * 0.15,
+                    top: h * 0.705,
+                    height: h * 0.065,
+                    left: w * 0.12,
+                    right: w * 0.12,
                     child: GestureDetector(
                       onTap: _triggerScan,
                       child: Container(
@@ -191,11 +197,11 @@ class _BiometricScreenState extends State<BiometricScreen> with SingleTickerProv
                         child: Center(
                           child: Text(
                             'AUTHENTICATE',
-                            style: GoogleFonts.inter(
-                              fontWeight: FontWeight.bold,
+                            style: GoogleFonts.orbitron(
+                              fontWeight: FontWeight.w800,
                               fontSize: 18,
-                              color: const Color(0xFF1A1A1A),
-                              letterSpacing: 1.2,
+                              color: const Color(0xFF111111),
+                              letterSpacing: 2.0,
                             ),
                           ),
                         ),
@@ -203,12 +209,12 @@ class _BiometricScreenState extends State<BiometricScreen> with SingleTickerProv
                     ),
                   ),
 
-                  // SKIP Button Overlay (Bottom Blank Button)
+                  // SKIP Button Overlay
                   Positioned(
-                    top: h * 0.795,
-                    height: h * 0.08,
-                    left: w * 0.15,
-                    right: w * 0.15,
+                    top: h * 0.815,
+                    height: h * 0.065,
+                    left: w * 0.12,
+                    right: w * 0.12,
                     child: GestureDetector(
                       onTap: _skip,
                       child: Container(
@@ -216,11 +222,11 @@ class _BiometricScreenState extends State<BiometricScreen> with SingleTickerProv
                         child: Center(
                           child: Text(
                             'SKIP',
-                            style: GoogleFonts.inter(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Colors.white,
-                              letterSpacing: 1.2,
+                            style: GoogleFonts.orbitron(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: Colors.white70,
+                              letterSpacing: 2.0,
                             ),
                           ),
                         ),

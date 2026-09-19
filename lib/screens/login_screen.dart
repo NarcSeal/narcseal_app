@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,9 +12,63 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _badgeController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
   void _handleLogin() {
     Navigator.pushReplacementNamed(context, '/dashboard');
+  }
+
+  Widget _buildTextField({
+    required String hint,
+    required bool isPassword,
+    required double topPercent,
+    required double heightPercent,
+    required TextEditingController controller,
+  }) {
+    return Positioned(
+      top: topPercent,
+      height: heightPercent,
+      left: 0,
+      right: 0,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40.0), // Limits to the width of the metallic box
+        child: Align(
+          alignment: Alignment.center,
+          child: TextField(
+            controller: controller,
+            obscureText: isPassword && _obscurePassword,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 1.0,
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: GoogleFonts.inter(
+                color: Colors.white54,
+                fontSize: 15,
+              ),
+              // Pushes text past the vertical icon divider
+              contentPadding: const EdgeInsets.only(left: 65.0, top: 12.0, bottom: 12.0),
+              filled: false,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.white54,
+                      ),
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    )
+                  : null,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -40,8 +95,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                   // Biometric Button Top Right
                   Positioned(
-                    top: 50,
-                    right: 20,
+                    top: h * 0.08,
+                    right: w * 0.05,
                     child: IconButton(
                       icon: const Icon(Icons.fingerprint, color: Colors.white, size: 32),
                       onPressed: () {
@@ -51,61 +106,30 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
 
                   // Badge Number
-                  Positioned(
-                    top: h * 0.50,
-                    left: w * 0.15,
-                    right: w * 0.15,
-                    child: TextField(
-                      controller: _badgeController,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: 'Badge Number',
-                        hintStyle: TextStyle(color: Colors.white54),
-                        filled: false,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                      ),
-                    ),
+                  _buildTextField(
+                    hint: 'Badge Number',
+                    isPassword: false,
+                    topPercent: h * 0.505,
+                    heightPercent: h * 0.08,
+                    controller: _badgeController,
                   ),
 
                   // Username
-                  Positioned(
-                    top: h * 0.59,
-                    left: w * 0.15,
-                    right: w * 0.15,
-                    child: TextField(
-                      controller: _usernameController,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: 'Username',
-                        hintStyle: TextStyle(color: Colors.white54),
-                        filled: false,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                      ),
-                    ),
+                  _buildTextField(
+                    hint: 'Username',
+                    isPassword: false,
+                    topPercent: h * 0.592,
+                    heightPercent: h * 0.08,
+                    controller: _usernameController,
                   ),
 
                   // Password
-                  Positioned(
-                    top: h * 0.68,
-                    left: w * 0.15,
-                    right: w * 0.15,
-                    child: TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: 'Password',
-                        hintStyle: TextStyle(color: Colors.white54),
-                        filled: false,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                      ),
-                    ),
+                  _buildTextField(
+                    hint: 'Password',
+                    isPassword: true,
+                    topPercent: h * 0.678,
+                    heightPercent: h * 0.08,
+                    controller: _passwordController,
                   ),
 
                   // Authenticate Button
