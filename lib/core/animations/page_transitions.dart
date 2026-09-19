@@ -22,7 +22,9 @@ class NarcSealFadeTransition extends PageRouteBuilder {
   NarcSealFadeTransition({
     required this.page,
     this.duration = const Duration(milliseconds: 400),
+    RouteSettings? settings,
   }) : super(
+          settings: settings,
           pageBuilder: (context, animation, secondaryAnimation) => page,
           transitionDuration: duration,
           reverseTransitionDuration: duration,
@@ -128,7 +130,9 @@ class NarcSealScaleFadeTransition extends PageRouteBuilder {
   NarcSealScaleFadeTransition({
     required this.page,
     this.duration = const Duration(milliseconds: 1200),
+    RouteSettings? settings,
   }) : super(
+          settings: settings,
           pageBuilder: (context, animation, secondaryAnimation) => page,
           transitionDuration: duration,
           reverseTransitionDuration: const Duration(milliseconds: 400),

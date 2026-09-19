@@ -50,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _handleNewTest() {
     HapticFeedback.mediumImpact();
-    Navigator.pushNamed(context, AppRoutes.camera);
+    Navigator.pushNamed(context, '/test-setup');
   }
 
   void _handleNavTap(int index) {

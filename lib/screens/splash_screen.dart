@@ -1,7 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
-import '../core/theme/colors.dart';
-import '../navigation/app_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,72 +11,140 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  late VideoPlayerController _controller;
+  VideoPlayerController? _controller1;
+  VideoPlayerController? _controller2;
+  bool _showVideo2 = false;
+  bool _showFinalFrame = false;
   bool _navigated = false;
+  Timer? _fallbackTimer;
 
   @override
   void initState() {
     super.initState();
-    
-    // Animation 1: Hero Splash
-    // Shield Materializing from Darkness
-    // Animation 2 logic/placeholder: Transition out or morph into next sequence
-    _controller = VideoPlayerController.asset('assets/videos/splash_hero.mp4')
-      ..setLooping(false)
-      ..setVolume(0)
-      ..initialize().then((_) {
-        setState(() {});
-        _controller.play();
-        _controller.addListener(_videoListener);
-      }).catchError((e) {
-        // Fallback if video fails to load
-        Future.delayed(const Duration(seconds: 2), _navigateToNext);
-      });
+    _controller1 = VideoPlayerController.asset('assets/videos/intro_1.mp4');
+    _controller2 = VideoPlayerController.asset('assets/videos/intro_2.mp4');
+    _initApp();
   }
 
-  void _videoListener() {
-    if (_controller.value.isInitialized &&
-        !_controller.value.isPlaying &&
-        _controller.value.position >= _controller.value.duration) {
-      _navigateToNext();
+  Future<void> _initApp() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    try {
+      await _controller1!.initialize();
+      await _controller2!.initialize();
+
+      if (mounted) {
+        setState(() {});
+      }
+
+      _controller1!.play();
+      _controller1!.addListener(() {
+        if (_controller1!.value.isInitialized) {
+          if (_controller1!.value.position >= _controller1!.value.duration && !_showVideo2) {
+            if (mounted) {
+              setState(() {
+                _showVideo2 = true;
+              });
+              _controller2!.play();
+            }
+          }
+        }
+      });
+
+      _controller2!.addListener(() {
+        if (_controller2!.value.isInitialized && _showVideo2) {
+          if (_controller2!.value.position >= _controller2!.value.duration && !_showFinalFrame) {
+            if (mounted) {
+              setState(() {
+                _showFinalFrame = true;
+              });
+            }
+          }
+        }
+      });
+    } catch (e) {
+      print("Video error: $e");
     }
+
+    _fallbackTimer = Timer(const Duration(seconds: 15), () {
+      if (!_showFinalFrame) {
+        if (mounted) {
+          setState(() {
+            _showVideo2 = true;
+            _showFinalFrame = true;
+          });
+        }
+      }
+    });
   }
 
   void _navigateToNext() {
-    if (_navigated || !mounted) return;
+    if (_navigated) return;
     _navigated = true;
-    _controller.removeListener(_videoListener);
-    
-    // Route to Login
-    Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+    _fallbackTimer?.cancel();
+    if (mounted) {
+      Navigator.of(context).pushReplacementNamed('/onboarding-main');
+    }
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_videoListener);
-    _controller.dispose();
+    _fallbackTimer?.cancel();
+    _controller1?.dispose();
+    _controller2?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: NarcSealColors.bgAbyss,
-      body: Center(
-        child: _controller.value.isInitialized
-            ? SizedBox.expand(
-                child: FittedBox(
-                  fit: BoxFit.cover,
-                  child: SizedBox(
-                    width: _controller.value.size.width,
-                    height: _controller.value.size.height,
-                    child: VideoPlayer(_controller),
-                  ),
-                ),
-              )
-            : const CircularProgressIndicator(
-                color: NarcSealColors.chromeHighlight,
-              ), // Loading spinner while video initializes
+      backgroundColor: const Color(0xFF000000),
+      body: Stack(
+        children: [
+          Center(
+            child: _showFinalFrame
+                ? Image.asset(
+                    'assets/images/onboarding/narcseal22.png',
+                    fit: BoxFit.contain,
+                  )
+                : _showVideo2
+                    ? (_controller2 != null && _controller2!.value.isInitialized
+                        ? SizedBox.expand(
+                            child: FittedBox(
+                              fit: BoxFit.contain, // 16:9 to 9:16 fit
+                              child: SizedBox(
+                                width: _controller2!.value.size.width,
+                                height: _controller2!.value.size.height,
+                                child: VideoPlayer(_controller2!),
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink())
+                    : (_controller1 != null && _controller1!.value.isInitialized
+                        ? SizedBox.expand(
+                            child: FittedBox(
+                              fit: BoxFit.cover,
+                              child: SizedBox(
+                                width: _controller1!.value.size.width,
+                                height: _controller1!.value.size.height,
+                                child: VideoPlayer(_controller1!),
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink()),
+          ),
+          if (_showFinalFrame)
+            Positioned(
+              bottom: 40,
+              right: 20,
+              child: FloatingActionButton(
+                backgroundColor: const Color(0xFF2A2A2A),
+                child: const Icon(Icons.arrow_forward, color: Colors.white),
+                onPressed: _navigateToNext,
+              ),
+            ),
+        ],
       ),
     );
   }
