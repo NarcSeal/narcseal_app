@@ -44,4 +44,18 @@ class Officer {
     final lastName = fullName.split(' ').last;
     return '$rankPrefix $lastName';
   }
+
+  factory Officer.fromJson(Map<String, dynamic> json) {
+    return Officer(
+      badgeId: json['badge_id'] as String? ?? '',
+      fullName: json['full_name'] as String? ?? json['officer_name'] as String? ?? 'Unknown',
+      username: json['username'] as String? ?? '',
+      rank: json['rank'] as String? ?? '',
+      role: json['role'] as String? ?? 'field_officer',
+      stationCode: json['station_code'] as String? ?? '',
+      district: json['district'] as String? ?? '',
+      state: json['state'] as String? ?? '',
+      isActive: json['is_active'] as bool? ?? true,
+    );
+  }
 }

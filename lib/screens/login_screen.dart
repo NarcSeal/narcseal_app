@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,9 +14,33 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
-  void _handleLogin() {
-    Navigator.pushReplacementNamed(context, '/dashboard');
+  void _handleLogin() async {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+
+    if (username.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter username and password')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    
+    final success = await ApiService.login(username, password);
+    
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (success) {
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid username or password')),
+      );
+    }
   }
 
   Widget _buildTextField({
@@ -132,16 +157,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _passwordController,
                   ),
 
-                  // Authenticate Button
                   Positioned(
                     top: h * 0.795,
                     left: w * 0.1,
                     right: w * 0.1,
                     height: h * 0.08,
                     child: GestureDetector(
-                      onTap: _handleLogin,
+                      onTap: _isLoading ? null : _handleLogin,
                       child: Container(
                         color: Colors.transparent, // Invisible interactive zone
+                        child: _isLoading 
+                            ? const Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
+                            : null,
                       ),
                     ),
                   ),

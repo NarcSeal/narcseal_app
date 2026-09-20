@@ -77,4 +77,52 @@ class EvidenceRecord {
   String get shortImageHash => imageHash.length > 12
       ? '${imageHash.substring(0, 12)}...'
       : imageHash;
+
+  factory EvidenceRecord.fromJson(Map<String, dynamic> json) {
+    return EvidenceRecord(
+      recordId: json['id'] as String? ?? json['record_id'] as String? ?? '',
+      officerBadgeId: json['officer_badge'] as String? ?? json['officer_badge_id'] as String? ?? '',
+      officerName: json['officer_name'] as String? ?? '',
+      timestamp: json['timestamp'] != null ? DateTime.parse(json['timestamp']) : DateTime.now(),
+      latitude: (json['gps_lat'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['gps_lng'] as num?)?.toDouble() ?? 0.0,
+      address: json['location_name'] as String?,
+      testResult: _parseTestResult(json['result'] as String? ?? 'NEGATIVE'),
+      substance: json['substance'] as String?,
+      confidence: (json['confidence_score'] as num?)?.toDouble() ?? 0.0,
+      imageHash: json['sha256_hash'] as String? ?? json['image_hash'] as String? ?? '',
+      previousHash: json['prev_block_hash'] as String? ?? json['previous_hash'] as String? ?? '',
+      recordHash: json['merkle_root'] as String? ?? json['record_hash'] as String? ?? '',
+      deviceId: json['device_id'] as String? ?? '',
+      isSynced: true,
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
+    );
+  }
+
+  static TestResult _parseTestResult(String resultStr) {
+    switch (resultStr.toUpperCase()) {
+      case 'POSITIVE': return TestResult.positive;
+      case 'INCONCLUSIVE': return TestResult.inconclusive;
+      default: return TestResult.negative;
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'record_id': recordId,
+      'officer_badge_id': officerBadgeId,
+      'officer_name': officerName,
+      'timestamp': timestamp.toIso8601String(),
+      'latitude': latitude,
+      'longitude': longitude,
+      'address': address ?? '',
+      'test_result': testResult.name.toUpperCase(),
+      'substance': substance ?? '',
+      'confidence': confidence,
+      'image_hash': imageHash,
+      'previous_hash': previousHash,
+      'record_hash': recordHash,
+      'device_id': deviceId,
+    };
+  }
 }

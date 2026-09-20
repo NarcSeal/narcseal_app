@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
+import 'package:uuid/uuid.dart';
+
+import '../services/api_service.dart';
+import '../models/evidence_record.dart';
+import '../models/test_result.dart';
 
 class EvidenceSealScreen extends StatefulWidget {
   const EvidenceSealScreen({super.key});
@@ -15,6 +20,9 @@ class _EvidenceSealScreenState extends State<EvidenceSealScreen> {
   bool _animationFinished = false;
   String _resultType = 'POSITIVE';
   bool _initialized = false;
+  bool _isSyncing = false;
+  bool _syncSuccess = false;
+  String _recordId = const Uuid().v4();
 
   @override
   void didChangeDependencies() {
@@ -48,10 +56,43 @@ class _EvidenceSealScreenState extends State<EvidenceSealScreen> {
               setState(() {
                 _animationFinished = true;
               });
+              _syncRecord();
             }
           }
         });
       });
+  }
+
+  Future<void> _syncRecord() async {
+    setState(() => _isSyncing = true);
+    final officer = ApiService.currentOfficer;
+    final record = EvidenceRecord(
+      recordId: _recordId,
+      officerBadgeId: officer.badgeId,
+      officerName: officer.fullName,
+      timestamp: DateTime.now(),
+      latitude: 28.6139, // mock gps
+      longitude: 77.2090, // mock gps
+      address: 'Connaught Place, New Delhi',
+      testResult: _resultType == 'POSITIVE' ? TestResult.positive : (_resultType == 'NEGATIVE' ? TestResult.negative : TestResult.inconclusive),
+      substance: _resultType == 'POSITIVE' ? 'Cocaine Hydrochloride' : (_resultType == 'NEGATIVE' ? 'No Narcotics Detected' : 'Unknown Substance'),
+      confidence: 0.98,
+      imageHash: '8f4b0292193b092a101b0f92223a9109',
+      previousHash: '2c99a0928bb019f2a991b11b',
+      recordHash: '2c99a0928bb019f2a991b11b',
+      deviceId: 'DEVICE-1029',
+      isSynced: false,
+      isSealed: true,
+      createdAt: DateTime.now(),
+    );
+
+    final success = await ApiService.uploadTestRecord(record);
+    if (mounted) {
+      setState(() {
+        _isSyncing = false;
+        _syncSuccess = success;
+      });
+    }
   }
 
   @override
@@ -153,20 +194,24 @@ class _EvidenceSealScreenState extends State<EvidenceSealScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.2),
-                            border: Border.all(color: Colors.greenAccent),
+                            color: _isSyncing ? Colors.blue.withValues(alpha: 0.2) : (_syncSuccess ? Colors.green.withValues(alpha: 0.2) : Colors.orange.withValues(alpha: 0.2)),
+                            border: Border.all(color: _isSyncing ? Colors.blueAccent : (_syncSuccess ? Colors.greenAccent : Colors.orangeAccent)),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            'INTEGRITY VERIFIED',
-                            style: GoogleFonts.inter(color: Colors.greenAccent, fontSize: 10, fontWeight: FontWeight.bold),
+                            _isSyncing ? 'SYNCING...' : (_syncSuccess ? 'SYNCED & VERIFIED' : 'LOCAL ONLY'),
+                            style: GoogleFonts.inter(
+                              color: _isSyncing ? Colors.blueAccent : (_syncSuccess ? Colors.greenAccent : Colors.orangeAccent), 
+                              fontSize: 10, 
+                              fontWeight: FontWeight.bold
+                            ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'NS-9942-88X',
+                      _recordId.split('-').first.toUpperCase(),
                       style: GoogleFonts.jetBrainsMono(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const Divider(color: Colors.white24, height: 32),

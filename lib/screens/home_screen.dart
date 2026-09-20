@@ -7,6 +7,9 @@ import '../core/theme/colors.dart';
 import '../core/widgets/stat_card.dart';
 import '../core/widgets/evidence_card.dart';
 import '../services/mock_data_service.dart';
+import '../services/api_service.dart';
+import '../models/evidence_record.dart';
+import '../models/officer.dart';
 import '../navigation/app_router.dart';
 import '../core/widgets/breathing_background.dart';
 
@@ -22,10 +25,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   late AnimationController _rotateController;
+  
+  List<EvidenceRecord> _records = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _fetchData();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -39,6 +46,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
+  }
+
+  Future<void> _fetchData() async {
+    final records = await ApiService.getRecentRecords();
+    if (mounted) {
+      setState(() {
+        _records = records;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -67,8 +84,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final officer = MockDataService.currentOfficer;
-    final records = MockDataService.recentRecords;
+    final officer = ApiService.currentOfficer;
+    final records = _records;
+
+    final todayTestCount = _records.where((r) {
+      final now = DateTime.now();
+      return r.timestamp.year == now.year &&
+             r.timestamp.month == now.month &&
+             r.timestamp.day == now.day;
+    }).length;
+
+    final pendingSyncCount = _records.where((r) => !r.isSynced).length;
 
     return Scaffold(
       backgroundColor: NarcSealColors.bgAbyss,
@@ -169,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     children: [
                       Expanded(
                         child: StatCard(
-                          value: MockDataService.todayTestCount,
+                          value: todayTestCount,
                           label: "TODAY'S TESTS",
                           accentColor: NarcSealColors.chromeHighlight,
                         ),
@@ -177,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       const SizedBox(width: 16),
                       Expanded(
                         child: StatCard(
-                          value: MockDataService.pendingSyncCount,
+                          value: pendingSyncCount,
                           label: 'PENDING SYNCS',
                           isPending: true,
                           accentColor: NarcSealColors.resultInconclusive,
@@ -283,7 +309,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                 // Evidence Cards List
                 Expanded(
-                  child: ListView.builder(
+                  child: _isLoading 
+                    ? const Center(child: CircularProgressIndicator(color: NarcSealColors.chromeHighlight))
+                    : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     itemCount: records.length,
                     itemBuilder: (context, index) {
