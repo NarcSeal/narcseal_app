@@ -4,8 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/colors.dart';
 import '../core/widgets/evidence_card.dart';
 import '../core/widgets/pulse_dot.dart';
-import '../services/mock_data_service.dart';
 import '../models/test_result.dart';
+import '../models/evidence_record.dart';
+import '../services/api_service.dart';
 
 /// Screen 7: Field Log — searchable, filterable test history.
 ///
@@ -37,13 +38,27 @@ class _FieldLogScreenState extends State<FieldLogScreen>
     'Unsynced',
   ];
 
+  List<EvidenceRecord> _allRecords = [];
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
+    _fetchRecords();
     _staggerController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     )..forward();
+  }
+
+  Future<void> _fetchRecords() async {
+    final records = await ApiService.getRecentRecords();
+    if (mounted) {
+      setState(() {
+        _allRecords = records;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -53,8 +68,8 @@ class _FieldLogScreenState extends State<FieldLogScreen>
     super.dispose();
   }
 
-  List<dynamic> get _filteredRecords {
-    final records = MockDataService.recentRecords;
+  List<EvidenceRecord> get _filteredRecords {
+    final records = _allRecords;
     if (_selectedFilter == 'All') return records;
     if (_selectedFilter == 'Unsynced') {
       return records.where((r) => !r.isSynced).toList();

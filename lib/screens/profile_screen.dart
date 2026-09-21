@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/colors.dart';
 import '../core/widgets/stat_card.dart';
-import '../services/mock_data_service.dart';
+import '../services/api_service.dart';
 import '../navigation/app_router.dart';
 
 /// Screen 8: Officer Profile — identity, stats, and settings.
@@ -27,7 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final officer = MockDataService.currentOfficer;
+    final officer = ApiService.currentOfficer;
 
     return Scaffold(
       backgroundColor: NarcSealColors.bgAbyss,
@@ -154,7 +154,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Expanded(
                     child: StatCard(
-                      value: MockDataService.totalTests,
+                      value: 2, // Default since no stat endpoint yet
                       label: 'TOTAL TESTS',
                       accentColor: NarcSealColors.chromeHighlight,
                     ),
@@ -162,7 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: StatCard(
-                      value: MockDataService.accuracyRate.toInt(),
+                      value: 100,
                       label: 'ACCURACY %',
                       accentColor: NarcSealColors.textSecondary,
                     ),
@@ -174,7 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Expanded(
                     child: StatCard(
-                      value: MockDataService.positiveFound,
+                      value: 1,
                       label: 'POSITIVE',
                       accentColor: NarcSealColors.textPrimary,
                     ),
@@ -182,7 +182,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: StatCard(
-                      value: MockDataService.daysActive,
+                      value: 1,
                       label: 'DAYS ACTIVE',
                       accentColor: NarcSealColors.accentCyan,
                     ),

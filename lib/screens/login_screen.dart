@@ -35,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (success) {
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      Navigator.pushReplacementNamed(context, '/home');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Invalid username or password')),

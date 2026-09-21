@@ -168,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${MockDataService.greeting}, ${officer.shortTitle}',
+                        '${DateTime.now().hour < 12 ? 'Good Morning' : DateTime.now().hour < 17 ? 'Good Afternoon' : 'Good Evening'}, ${officer.shortTitle}',
                         style: GoogleFonts.inter(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,

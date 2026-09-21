@@ -14,7 +14,7 @@ class NightOpsTheme {
         error: NarcSealColors.resultPositive, // keep semantic positive
         surface: NarcSealColors.nightBg,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: NarcSealColors.nightBg,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppConstants.borderRadius),

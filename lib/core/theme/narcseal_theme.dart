@@ -14,7 +14,7 @@ class NarcSealTheme {
         error: NarcSealColors.resultPositiveText,
         surface: NarcSealColors.bgSurface,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: NarcSealColors.bgSurface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppConstants.borderRadius),
