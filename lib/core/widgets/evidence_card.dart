@@ -1,11 +1,10 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../theme/colors.dart';
+import '../theme/typography.dart';
 import '../../models/test_result.dart';
 import 'status_chip.dart';
 
-class EvidenceCard extends StatefulWidget {
+class EvidenceCard extends StatelessWidget {
   final TestResult result;
   final String? substance;
   final double confidence;
@@ -31,156 +30,134 @@ class EvidenceCard extends StatefulWidget {
     required this.onTap,
   });
 
-  @override
-  State<EvidenceCard> createState() => _EvidenceCardState();
-}
-
-class _EvidenceCardState extends State<EvidenceCard> {
-  bool _isPressed = false;
-
   Color _getResultColor() {
-    switch (widget.result) {
-      case TestResult.positive: return NarcSealColors.resultPositiveText;
-      case TestResult.negative: return NarcSealColors.resultNegativeText;
-      case TestResult.inconclusive: return NarcSealColors.resultInconclusiveText;
+    switch (result) {
+      case TestResult.positive:
+        return NarcSealColors.positive;
+      case TestResult.negative:
+        return NarcSealColors.negative;
+      case TestResult.inconclusive:
+        return NarcSealColors.inconclusive;
     }
   }
-  
+
   String _getResultText() {
-    switch (widget.result) {
-      case TestResult.positive: return 'POSITIVE';
-      case TestResult.negative: return 'NEGATIVE';
-      case TestResult.inconclusive: return 'INCONCLUSIVE';
+    switch (result) {
+      case TestResult.positive:
+        return 'POSITIVE';
+      case TestResult.negative:
+        return 'NEGATIVE';
+      case TestResult.inconclusive:
+        return 'INCONCLUSIVE';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final resultColor = _getResultColor();
-    
-    return GestureDetector(
-      onTapDown: (_) {
-        setState(() => _isPressed = true);
-        HapticFeedback.selectionClick();
-      },
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        transform: Matrix4.translationValues(0, _isPressed ? -2 : 0, 0),
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
         decoration: BoxDecoration(
-          color: NarcSealColors.bgGunmetal.withOpacity(0.6),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: NarcSealColors.borderSubtle.withOpacity(0.5)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: _isPressed ? 12 : 8,
-              offset: Offset(0, _isPressed ? 4 : 2),
-            )
-          ],
+          color: NarcSealColors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: NarcSealColors.lightBeige),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: resultColor, width: 4),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: resultColor,
+                  ),
                 ),
-                color: Colors.white.withOpacity(0.02),
-              ),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(shape: BoxShape.circle, color: resultColor),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _getResultText(),
-                        style: TextStyle(
-                          color: resultColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '${widget.confidence.toStringAsFixed(1)}%',
-                        style: const TextStyle(
-                          color: NarcSealColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
+                const SizedBox(width: 8),
+                Text(
+                  _getResultText(),
+                  style: NarcSealTypography.statusBadge.copyWith(
+                    color: resultColor,
                   ),
-                  const SizedBox(height: 8),
-                  if (widget.substance != null)
-                    Text(
-                      widget.substance!,
-                      style: const TextStyle(
-                        color: NarcSealColors.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time, size: 14, color: NarcSealColors.textMuted),
-                      const SizedBox(width: 4),
-                      Text(
-                        widget.time,
-                        style: const TextStyle(
-                          fontFamily: 'Courier', // monospace
-                          color: NarcSealColors.textMuted,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      const Icon(Icons.location_on, size: 14, color: NarcSealColors.textMuted),
-                      const SizedBox(width: 4),
-                      Text(
-                        widget.location,
-                        style: const TextStyle(
-                          color: NarcSealColors.textMuted,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      if (widget.isSealed) const StatusChip(status: StatusType.sealed),
-                      if (widget.isSealed) const SizedBox(width: 8),
-                      if (widget.isSynced) const StatusChip(status: StatusType.synced)
-                      else const StatusChip(status: StatusType.pending),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
+                ),
+                const Spacer(),
+                if (result != TestResult.inconclusive)
                   Text(
-                    widget.hash.length > 12 ? '${widget.hash.substring(0, 12)}...' : widget.hash,
-                    style: const TextStyle(
-                      fontFamily: 'Courier', // monospace
-                      color: NarcSealColors.chromeHighlight,
-                      fontSize: 12,
+                    '${confidence.toStringAsFixed(1)}%',
+                    style: NarcSealTypography.importantNumbers.copyWith(
+                      fontSize: 16,
                     ),
                   ),
-                ],
-              ),
+                if (result == TestResult.inconclusive)
+                  const Icon(Icons.remove, size: 16, color: NarcSealColors.graphite),
+              ],
             ),
-          ),
+            const SizedBox(height: 8),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  substance ?? 'Unknown',
+                  style: NarcSealTypography.sectionTitle.copyWith(
+                    fontSize: 18,
+                  ),
+                ),
+                const Icon(Icons.more_vert, size: 20, color: NarcSealColors.graphite),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.access_time, size: 14, color: NarcSealColors.graphite),
+                const SizedBox(width: 4),
+                Text(
+                  date != null ? '$date • $time' : time,
+                  style: NarcSealTypography.metadata,
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(Icons.location_on_outlined, size: 14, color: NarcSealColors.graphite),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    location,
+                    style: NarcSealTypography.metadata,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (isSealed) const StatusChip(status: StatusType.sealed),
+                if (isSealed) const SizedBox(width: 8),
+                if (isSynced)
+                  const StatusChip(status: StatusType.synced)
+                else
+                  const StatusChip(status: StatusType.pending),
+                const Spacer(),
+                Text(
+                  'ID: ${hash.length > 12 ? hash.substring(0, 12) : hash}',
+                  style: NarcSealTypography.metadata.copyWith(
+                    color: NarcSealColors.titaniumGray,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

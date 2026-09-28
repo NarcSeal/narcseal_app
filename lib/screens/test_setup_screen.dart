@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../core/theme/colors.dart';
+import '../core/theme/typography.dart';
 import '../navigation/app_router.dart';
+import '../models/test_kit.dart';
+import '../services/api_service.dart';
 
 class TestSetupScreen extends StatefulWidget {
   const TestSetupScreen({super.key});
@@ -12,31 +15,54 @@ class TestSetupScreen extends StatefulWidget {
 }
 
 class _TestSetupScreenState extends State<TestSetupScreen> {
-  String? _selectedKit;
+  TestKit? _selectedKit;
   bool _timerActive = false;
-  int _countdown = 5; // 5-second demo timer
+  int _countdown = 0;
   Timer? _timer;
+  bool _isLoading = true;
+  List<TestKit> _kits = [];
 
-  final List<String> _kits = [
-    'Marquis (Ecstasy/Heroin)',
-    'Scott (Cocaine)',
-    'Mandelin (Ketamine/Amphetamines)',
-    'Mecke (Opiates)',
-    'Ehrlich (LSD/Indoles)',
-    'Other'
-  ];
+  final TextEditingController _sampleIdController = TextEditingController(text: 'NS-2026-004282');
+  final TextEditingController _notesController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchKits();
+  }
+
+  Future<void> _fetchKits() async {
+    final kits = await ApiService.getTestKits();
+    if (mounted) {
+      setState(() {
+        _kits = kits;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _sampleIdController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
   void _startTimer() {
     if (_selectedKit == null) return;
     
-    HapticFeedback.heavyImpact();
+    // DEBUG: Print the selected kit details to trace the timer value
+    print('=== TIMER DEBUG ===');
+    print('Selected kit: ${_selectedKit!.name}');
+    print('Selected kit id: ${_selectedKit!.id}');
+    print('waitTimeSeconds: ${_selectedKit!.waitTimeSeconds}');
+    print('All kits: ${_kits.map((k) => '${k.name}: ${k.waitTimeSeconds}s').toList()}');
+    print('===================');
+
+    HapticFeedback.mediumImpact();
     setState(() {
+      _countdown = _selectedKit!.waitTimeSeconds;
       _timerActive = true;
     });
 
@@ -54,130 +80,139 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
 
   void _navigateToCamera() {
     HapticFeedback.vibrate();
-    Navigator.pushReplacementNamed(context, '/camera');
+    Navigator.pushReplacementNamed(
+      context, 
+      AppRoutes.camera,
+      arguments: {
+        'testKit': _selectedKit?.name,
+        'testKitId': _selectedKit?.id,
+        'sampleId': _sampleIdController.text,
+        'notes': _notesController.text,
+      }
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF000000),
+      backgroundColor: NarcSealColors.warmOffWhite,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         title: Text(
-          'TEST SETUP',
-          style: GoogleFonts.orbitron(color: Colors.white, fontWeight: FontWeight.bold),
+          _timerActive ? 'TEST IN PROGRESS' : 'TEST SETUP',
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Image.asset(
+              'assets/images/branding/narcseal_logo.png',
+              height: 28,
+              errorBuilder: (c, e, s) => const Icon(Icons.security, color: NarcSealColors.titaniumGray),
+            ),
+          )
+        ],
       ),
       body: SafeArea(
-        child: _timerActive ? _buildTimerView() : _buildKitSelection(),
+        child: _isLoading 
+            ? const Center(child: CircularProgressIndicator(color: NarcSealColors.olive))
+            : (_timerActive ? _buildTimerView() : _buildKitSelection()),
       ),
     );
   }
 
   Widget _buildKitSelection() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'Select Test Kit Type',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
+            style: NarcSealTypography.sectionTitle,
           ),
-          const SizedBox(height: 24),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _kits.length,
-              itemBuilder: (context, index) {
-                final kit = _kits[index];
-                final isSelected = kit == _selectedKit;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: InkWell(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      setState(() => _selectedKit = kit);
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                      decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF00B4D8).withValues(alpha: 0.2) : const Color(0xFF1A1A1A),
-                        border: Border.all(
-                          color: isSelected ? const Color(0xFF00B4D8) : const Color(0xFF333333),
-                          width: 2,
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: NarcSealColors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: NarcSealColors.lightBeige),
+            ),
+            child: Column(
+              children: _kits.asMap().entries.map((entry) {
+                final int index = entry.key;
+                final TestKit kit = entry.value;
+                final bool isSelected = kit.id == _selectedKit?.id;
+                
+                return Column(
+                  children: [
+                    RadioListTile<TestKit>(
+                      value: kit,
+                      groupValue: _selectedKit,
+                      onChanged: (value) {
+                        setState(() => _selectedKit = value);
+                      },
+                      title: Text(
+                        kit.name,
+                        style: NarcSealTypography.body.copyWith(
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                         ),
-                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                            color: isSelected ? const Color(0xFF00B4D8) : Colors.white54,
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              kit,
-                              style: GoogleFonts.inter(
-                                color: isSelected ? Colors.white : Colors.white70,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        ],
+                      subtitle: Text(
+                        'Reaction time: ${kit.waitTimeSeconds >= 60 ? '${kit.waitTimeSeconds ~/ 60}m ${kit.waitTimeSeconds % 60}s' : '${kit.waitTimeSeconds}s'}',
+                        style: NarcSealTypography.metadata,
                       ),
+                      activeColor: NarcSealColors.olive,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                      controlAffinity: ListTileControlAffinity.leading,
                     ),
-                  ),
+                    if (index < _kits.length - 1)
+                      const Divider(height: 1, indent: 48),
+                  ],
                 );
-              },
+              }).toList(),
             ),
           ),
-          if (_selectedKit != null)
-            Column(
+          
+          const SizedBox(height: 24),
+          
+          Text(
+            'Additional Details (Optional)',
+            style: NarcSealTypography.sectionTitle,
+          ),
+          const SizedBox(height: 16),
+          
+          TextField(
+            controller: _sampleIdController,
+            style: NarcSealTypography.body,
+            decoration: InputDecoration(
+              labelText: 'Sample ID (Auto-generated)',
+              labelStyle: NarcSealTypography.label,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          TextField(
+            controller: _notesController,
+            style: NarcSealTypography.body,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'Add notes...',
+              hintStyle: NarcSealTypography.label,
+            ),
+          ),
+          
+          const SizedBox(height: 32),
+          
+          ElevatedButton(
+            onPressed: _selectedKit != null ? _startTimer : null,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.1),
-                    border: Border.all(color: Colors.amber),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Break the test kit ampoule NOW and tap START',
-                    style: GoogleFonts.inter(color: Colors.amber, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _startTimer,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00B4D8),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Text(
-                    'START TEST TIMER',
-                    style: GoogleFonts.orbitron(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
+                Text('PROCEED TO TEST', style: NarcSealTypography.buttonText),
+                const SizedBox(width: 8),
+                const Icon(Icons.arrow_forward, size: 18),
               ],
             ),
+          ),
         ],
       ),
     );
@@ -190,58 +225,78 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'WAIT FOR REACTION',
-              style: GoogleFonts.orbitron(
-                color: const Color(0xFF00B4D8),
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2,
-              ),
-            ),
-            const SizedBox(height: 48),
             Container(
-              width: 200,
-              height: 200,
+              width: 240,
+              height: 240,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF00B4D8), width: 4),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF00B4D8).withValues(alpha: 0.3),
-                    blurRadius: 30,
-                    spreadRadius: 5,
-                  )
-                ]
+                border: Border.all(color: NarcSealColors.olive, width: 8),
               ),
               child: Center(
                 child: Text(
-                  '00:0$_countdown',
-                  style: GoogleFonts.jetBrainsMono(
-                    color: Colors.white,
+                  '${(_countdown ~/ 60).toString().padLeft(2, '0')}:${(_countdown % 60).toString().padLeft(2, '0')}',
+                  style: NarcSealTypography.importantNumbers.copyWith(
                     fontSize: 48,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 64),
+            const SizedBox(height: 48),
+            
+            Text(
+              'Analyzing chemical reaction...',
+              style: NarcSealTypography.body,
+            ),
+            
+            const SizedBox(height: 24),
+            
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
-                border: Border.all(color: Colors.redAccent),
-                borderRadius: BorderRadius.circular(12),
+                color: const Color(0xFFFDECEE), // very light red
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: NarcSealColors.positive),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 32),
+                  const Icon(Icons.warning_rounded, color: NarcSealColors.positive, size: 32),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
                       'DO NOT take the photo yet.\nWait for the chemical reaction to develop.',
-                      style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                      style: NarcSealTypography.body.copyWith(
+                        color: NarcSealColors.positive,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 48),
+            
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: NarcSealColors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: NarcSealColors.lightBeige),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.science_outlined, color: NarcSealColors.olive, size: 24),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Selected Kit', style: NarcSealTypography.metadata),
+                      Text(
+                        _selectedKit?.name ?? '',
+                        style: NarcSealTypography.sectionTitle,
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -1,72 +1,60 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
-import 'pulse_dot.dart';
+import '../theme/typography.dart';
 
 enum StatusType { sealed, synced, pending }
 
 class StatusChip extends StatelessWidget {
   final StatusType status;
-  final bool compact;
 
   const StatusChip({
     super.key,
     required this.status,
-    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
     IconData icon;
-    Color color;
     String label;
-    bool needsPulse = false;
+    Color color;
 
     switch (status) {
       case StatusType.sealed:
-        icon = Icons.lock;
-        color = Colors.green;
+        icon = Icons.lock_outline;
         label = 'Sealed';
+        color = NarcSealColors.titaniumGray;
         break;
       case StatusType.synced:
-        icon = Icons.check_circle;
-        color = Colors.green;
+        icon = Icons.sync;
         label = 'Synced';
+        color = NarcSealColors.titaniumGray;
         break;
       case StatusType.pending:
-        icon = Icons.hourglass_empty;
-        color = Colors.amber;
-        label = 'Pending';
-        needsPulse = true;
+        icon = Icons.sync_disabled;
+        label = 'Not Synced';
+        color = NarcSealColors.graphite;
         break;
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 6 : 8,
-        vertical: compact ? 2 : 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: NarcSealColors.bgElevated,
-        borderRadius: BorderRadius.circular(8),
+        color: NarcSealColors.warmOffWhite,
+        border: Border.all(color: NarcSealColors.paleOlive),
+        borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (needsPulse)
-            PulseDot(color: color, size: compact ? 6 : 8)
-          else
-            Icon(icon, size: compact ? 10 : 12, color: color),
-          SizedBox(width: compact ? 2 : 4),
-          if (!compact)
-            Text(
-              label,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w500,
-                fontSize: 10,
-                color: NarcSealColors.textPrimary,
-              ),
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: NarcSealTypography.metadata.copyWith(
+              fontSize: 10,
+              color: color,
             ),
+          ),
         ],
       ),
     );

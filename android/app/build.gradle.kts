@@ -39,6 +39,11 @@ android {
     }
 }
 
+dependencies {
+    // Required by camera_android_camerax — missing transitive dependency
+    implementation("androidx.concurrent:concurrent-futures:1.2.0")
+}
+
 flutter {
     source = "../.."
 }

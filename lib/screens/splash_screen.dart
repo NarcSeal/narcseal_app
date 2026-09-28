@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../core/theme/colors.dart';
+import '../core/theme/typography.dart';
+import '../navigation/app_router.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,139 +12,127 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  VideoPlayerController? _controller1;
-  VideoPlayerController? _controller2;
-  bool _showVideo2 = false;
-  bool _showFinalFrame = false;
-  bool _navigated = false;
-  Timer? _fallbackTimer;
-
   @override
   void initState() {
     super.initState();
-    _controller1 = VideoPlayerController.asset('assets/videos/intro_1.mp4');
-    _controller2 = VideoPlayerController.asset('assets/videos/intro_2.mp4');
-    _initApp();
-  }
-
-  Future<void> _initApp() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-
-    try {
-      await _controller1!.initialize();
-      await _controller2!.initialize();
-
+    // Navigate to login after 2 seconds
+    Timer(const Duration(seconds: 2), () {
       if (mounted) {
-        setState(() {});
-      }
-
-      _controller1!.play();
-      _controller1!.addListener(() {
-        if (_controller1!.value.isInitialized) {
-          if (_controller1!.value.position >= _controller1!.value.duration && !_showVideo2) {
-            if (mounted) {
-              setState(() {
-                _showVideo2 = true;
-              });
-              _controller2!.play();
-            }
-          }
-        }
-      });
-
-      _controller2!.addListener(() {
-        if (_controller2!.value.isInitialized && _showVideo2) {
-          if (_controller2!.value.position >= _controller2!.value.duration && !_showFinalFrame) {
-            if (mounted) {
-              setState(() {
-                _showFinalFrame = true;
-              });
-            }
-          }
-        }
-      });
-    } catch (e) {
-      print("Video error: $e");
-    }
-
-    _fallbackTimer = Timer(const Duration(seconds: 15), () {
-      if (!_showFinalFrame) {
-        if (mounted) {
-          setState(() {
-            _showVideo2 = true;
-            _showFinalFrame = true;
-          });
-        }
+        Navigator.of(context).pushReplacementNamed(AppRoutes.login);
       }
     });
-  }
-
-  void _navigateToNext() {
-    if (_navigated) return;
-    _navigated = true;
-    _fallbackTimer?.cancel();
-    if (mounted) {
-      Navigator.of(context).pushReplacementNamed('/onboarding-main');
-    }
-  }
-
-  @override
-  void dispose() {
-    _fallbackTimer?.cancel();
-    _controller1?.dispose();
-    _controller2?.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF000000),
+      backgroundColor: NarcSealColors.warmOffWhite,
       body: Stack(
         children: [
-          Center(
-            child: _showFinalFrame
-                ? Image.asset(
-                    'assets/images/onboarding/narcseal22.png',
-                    fit: BoxFit.contain,
-                  )
-                : _showVideo2
-                    ? (_controller2 != null && _controller2!.value.isInitialized
-                        ? SizedBox.expand(
-                            child: FittedBox(
-                              fit: BoxFit.contain, // 16:9 to 9:16 fit
-                              child: SizedBox(
-                                width: _controller2!.value.size.width,
-                                height: _controller2!.value.size.height,
-                                child: VideoPlayer(_controller2!),
-                              ),
-                            ),
-                          )
-                        : const SizedBox.shrink())
-                    : (_controller1 != null && _controller1!.value.isInitialized
-                        ? SizedBox.expand(
-                            child: FittedBox(
-                              fit: BoxFit.cover,
-                              child: SizedBox(
-                                width: _controller1!.value.size.width,
-                                height: _controller1!.value.size.height,
-                                child: VideoPlayer(_controller1!),
-                              ),
-                            ),
-                          )
-                        : const SizedBox.shrink()),
-          ),
-          if (_showFinalFrame)
-            Positioned(
-              bottom: 40,
-              right: 20,
-              child: FloatingActionButton(
-                backgroundColor: const Color(0xFF2A2A2A),
-                child: const Icon(Icons.arrow_forward, color: Colors.white),
-                onPressed: _navigateToNext,
+          // Subtle wave background pattern
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.05,
+              child: Image.asset(
+                'assets/images/backgrounds/wave_pattern.png', // Assuming this asset exists or will be added
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const SizedBox(),
               ),
             ),
+          ),
+          
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo
+                Image.asset(
+                  'assets/images/branding/narcseal_logo.png', // Main shield logo
+                  width: 160,
+                  height: 160,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.security,
+                      size: 160,
+                      color: NarcSealColors.titaniumGray,
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                
+                // Brand Name
+                Text(
+                  'NarcSeal',
+                  style: NarcSealTypography.appTitle.copyWith(
+                    fontSize: 40,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                
+                // Tagline
+                Text(
+                  'Capture · Verify · Preserve',
+                  style: NarcSealTypography.body.copyWith(
+                    color: NarcSealColors.graphite,
+                  ),
+                ),
+                
+                const SizedBox(height: 60),
+                
+                // Loading indicator (optional, matching reference "keep it restrained")
+                const SizedBox(
+                  width: 40,
+                  child: LinearProgressIndicator(
+                    color: NarcSealColors.olive,
+                    backgroundColor: NarcSealColors.lightBeige,
+                    minHeight: 2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Bottom Text
+          Positioned(
+            bottom: 40,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'TRUST',
+                  style: NarcSealTypography.navLabel.copyWith(
+                    color: NarcSealColors.graphite,
+                    letterSpacing: 2,
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Text('|', style: TextStyle(color: NarcSealColors.paleOlive)),
+                ),
+                Text(
+                  'EVIDENCE',
+                  style: NarcSealTypography.navLabel.copyWith(
+                    color: NarcSealColors.graphite,
+                    letterSpacing: 2,
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Text('|', style: TextStyle(color: NarcSealColors.paleOlive)),
+                ),
+                Text(
+                  'JUSTICE',
+                  style: NarcSealTypography.navLabel.copyWith(
+                    color: NarcSealColors.graphite,
+                    letterSpacing: 2,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

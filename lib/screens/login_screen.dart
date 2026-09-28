@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../core/theme/colors.dart';
+import '../core/theme/typography.dart';
 import '../services/api_service.dart';
+import '../navigation/app_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -35,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (success) {
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Invalid username or password')),
@@ -45,52 +47,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildTextField({
     required String hint,
+    required IconData icon,
     required bool isPassword,
-    required double topPercent,
-    required double heightPercent,
     required TextEditingController controller,
   }) {
-    return Positioned(
-      top: topPercent,
-      height: heightPercent,
-      left: 0,
-      right: 0,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40.0), // Limits to the width of the metallic box
-        child: Align(
-          alignment: Alignment.center,
-          child: TextField(
-            controller: controller,
-            obscureText: isPassword && _obscurePassword,
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 1.0,
-            ),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: GoogleFonts.inter(
-                color: Colors.white54,
-                fontSize: 15,
-              ),
-              // Pushes text past the vertical icon divider
-              contentPadding: const EdgeInsets.only(left: 65.0, top: 12.0, bottom: 12.0),
-              filled: false,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              suffixIcon: isPassword
-                  ? IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.white54,
-                      ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                    )
-                  : null,
-            ),
-          ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: TextField(
+        controller: controller,
+        obscureText: isPassword && _obscurePassword,
+        style: NarcSealTypography.body,
+        decoration: InputDecoration(
+          hintText: hint,
+          prefixIcon: Icon(icon, color: NarcSealColors.titaniumGray),
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    color: NarcSealColors.titaniumGray,
+                  ),
+                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                )
+              : null,
         ),
       ),
     );
@@ -99,83 +77,205 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF000000),
-      body: Center(
-        child: AspectRatio(
-          aspectRatio: 9 / 16,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final w = constraints.maxWidth;
-              final h = constraints.maxHeight;
-
-              return Stack(
+      backgroundColor: NarcSealColors.warmOffWhite,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Subtle background
+            Positioned.fill(
+              child: Opacity(
+                opacity: 0.05,
+                child: Image.asset(
+                  'assets/images/backgrounds/wave_pattern.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const SizedBox(),
+                ),
+              ),
+            ),
+            
+            SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+              child: Column(
                 children: [
-                  // Background Image
-                  Positioned.fill(
-                    child: Image.asset(
-                      'assets/images/onboarding/login_bg.png',
-                      fit: BoxFit.fill,
+                  // Logo
+                  Image.asset(
+                    'assets/images/branding/narcseal_logo.png',
+                    width: 120,
+                    height: 120,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                        Icons.security,
+                        size: 120,
+                        color: NarcSealColors.titaniumGray,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Brand Name
+                  Text(
+                    'NarcSeal',
+                    style: NarcSealTypography.appTitle.copyWith(
+                      fontSize: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  
+                  // Tagline
+                  Text(
+                    'Capture · Verify · Preserve',
+                    style: NarcSealTypography.body.copyWith(
+                      color: NarcSealColors.graphite,
+                      fontSize: 14,
                     ),
                   ),
                   
-                  // Biometric Button Top Right
-                  Positioned(
-                    top: h * 0.08,
-                    right: w * 0.05,
-                    child: IconButton(
-                      icon: const Icon(Icons.fingerprint, color: Colors.white, size: 32),
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/biometric', arguments: {'mode': 'login'});
-                      },
-                    ),
-                  ),
+                  const SizedBox(height: 48),
 
-                  // Badge Number
+                  // Inputs
                   _buildTextField(
                     hint: 'Badge Number',
+                    icon: Icons.badge_outlined,
                     isPassword: false,
-                    topPercent: h * 0.505,
-                    heightPercent: h * 0.08,
                     controller: _badgeController,
                   ),
-
-                  // Username
                   _buildTextField(
                     hint: 'Username',
+                    icon: Icons.person_outline,
                     isPassword: false,
-                    topPercent: h * 0.592,
-                    heightPercent: h * 0.08,
                     controller: _usernameController,
                   ),
-
-                  // Password
                   _buildTextField(
                     hint: 'Password',
+                    icon: Icons.lock_outline,
                     isPassword: true,
-                    topPercent: h * 0.678,
-                    heightPercent: h * 0.08,
                     controller: _passwordController,
                   ),
 
-                  Positioned(
-                    top: h * 0.795,
-                    left: w * 0.1,
-                    right: w * 0.1,
-                    height: h * 0.08,
-                    child: GestureDetector(
-                      onTap: _isLoading ? null : _handleLogin,
-                      child: Container(
-                        color: Colors.transparent, // Invisible interactive zone
-                        child: _isLoading 
-                            ? const Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
-                            : null,
+                  const SizedBox(height: 8),
+
+                  // Authenticate Button
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : _handleLogin,
+                    child: _isLoading 
+                        ? const SizedBox(
+                            height: 20, 
+                            width: 20, 
+                            child: CircularProgressIndicator(color: NarcSealColors.white, strokeWidth: 2)
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('AUTHENTICATE', style: NarcSealTypography.buttonText),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.arrow_forward, size: 18),
+                            ],
+                          ),
+                  ),
+
+                  const SizedBox(height: 24),
+                  
+                  // OR divider
+                  Row(
+                    children: [
+                      const Expanded(child: Divider()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'OR',
+                          style: NarcSealTypography.label.copyWith(
+                            color: NarcSealColors.graphite,
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider()),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 24),
+
+                  // SSO Button
+                  OutlinedButton(
+                    onPressed: () {
+                      // SSO Logic placeholder
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.account_balance, size: 20), // Placeholder for Indian Emblem
+                        const SizedBox(width: 12),
+                        Text(
+                          'Login with Government SSO',
+                          style: NarcSealTypography.buttonText.copyWith(
+                            color: NarcSealColors.titaniumGray,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Forgot Password
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {},
+                      child: Text(
+                        'Forgot Password?',
+                        style: NarcSealTypography.label.copyWith(
+                          color: NarcSealColors.graphite,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                   ),
                 ],
-              );
-            },
-          ),
+              ),
+            ),
+            
+            // Bottom Text
+            Positioned(
+              bottom: 24,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'TRUST',
+                    style: NarcSealTypography.navLabel.copyWith(
+                      color: NarcSealColors.graphite,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text('|', style: TextStyle(color: NarcSealColors.paleOlive)),
+                  ),
+                  Text(
+                    'EVIDENCE',
+                    style: NarcSealTypography.navLabel.copyWith(
+                      color: NarcSealColors.graphite,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text('|', style: TextStyle(color: NarcSealColors.paleOlive)),
+                  ),
+                  Text(
+                    'JUSTICE',
+                    style: NarcSealTypography.navLabel.copyWith(
+                      color: NarcSealColors.graphite,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

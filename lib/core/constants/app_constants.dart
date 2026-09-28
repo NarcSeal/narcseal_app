@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 /// Core constants for the NarcSeal application.
 class AppConstants {
   // Dimensions and Layout
+  static const double borderRadiusSmall = 8.0;
   static const double borderRadius = 16.0;
   static const double borderRadiusLarge = 24.0;
   static const EdgeInsets screenPadding = EdgeInsets.all(16.0);

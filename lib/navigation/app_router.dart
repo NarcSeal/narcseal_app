@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/animations/page_transitions.dart';
+import '../screens/intro_videos_screen.dart';
 import '../screens/splash_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/onboarding_main_screen.dart';
@@ -14,12 +15,15 @@ import '../screens/result_screen.dart';
 import '../screens/evidence_seal_screen.dart';
 import '../screens/field_log_screen.dart';
 import '../screens/profile_screen.dart';
+import '../screens/settings_screen.dart';
 import '../screens/security_screens.dart';
+import '../screens/stats_screen.dart';
 import '../models/test_result.dart';
 
 /// Centralized route names for the NarcSeal app.
 class AppRoutes {
   static const String splash = '/';
+  static const String mainSplash = '/main-splash';
   static const String onboarding = '/onboarding';
   static const String onboardingMain = '/onboarding-main';
   static const String featureVideo = '/feature-video';
@@ -32,6 +36,10 @@ class AppRoutes {
   static const String evidenceSeal = '/evidence-seal';
   static const String fieldLog = '/field-log';
   static const String profile = '/profile';
+  static const String testSetup = '/test-setup';
+  static const String stats = '/stats';
+  static const String settings = '/settings';
+  static const String testDetails = '/test-details';
   static const String tamperDetected = '/tamper-detected';
   static const String integrityVerified = '/integrity-verified';
 }
@@ -41,7 +49,10 @@ class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.splash:
-        return MaterialPageRoute(builder: (_) => const SplashScreen());
+        return MaterialPageRoute(builder: (_) => const IntroVideosScreen());
+
+      case AppRoutes.mainSplash:
+        return NarcSealFadeTransition(page: const SplashScreen());
 
       case AppRoutes.onboarding:
         return NarcSealFadeTransition(page: const OnboardingScreen());
@@ -70,11 +81,21 @@ class AppRouter {
       case AppRoutes.home:
         return NarcSealSlideUpFadeTransition(page: const HomeScreen());
 
-      case '/test-setup':
+      case AppRoutes.testSetup:
         return NarcSealSlideUpTransition(page: const TestSetupScreen());
+        
+      case AppRoutes.stats:
+        return NarcSealFadeTransition(page: const StatsScreen());
+        
+      case AppRoutes.testDetails:
+        // Re-use result screen for now to show details
+        return NarcSealSlideUpTransition(page: const ResultScreen());
 
       case AppRoutes.camera:
-        return NarcSealSlideUpTransition(page: const CameraCaptureScreen());
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const CameraCaptureScreen(),
+        );
 
       case AppRoutes.processing:
         return NarcSealCrossFadeTransition(page: const ProcessingScreen());
@@ -97,6 +118,9 @@ class AppRouter {
 
       case AppRoutes.profile:
         return NarcSealSlideRightTransition(page: const ProfileScreen());
+        
+      case AppRoutes.settings:
+        return NarcSealSlideRightTransition(page: const SettingsScreen());
 
       case AppRoutes.tamperDetected:
         final args = settings.arguments as Map<String, String?>?;

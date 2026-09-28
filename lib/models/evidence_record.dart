@@ -11,6 +11,9 @@ class EvidenceRecord {
   final String? address;
   final TestResult testResult;
   final String? substance;
+  final String? testKitType;
+  final String? sampleId;
+  final String? notes;
   final double confidence;
   final String? imageBase64;
   final String imageHash;
@@ -32,6 +35,9 @@ class EvidenceRecord {
     this.address,
     required this.testResult,
     this.substance,
+    this.testKitType,
+    this.sampleId,
+    this.notes,
     required this.confidence,
     this.imageBase64,
     required this.imageHash,
@@ -87,9 +93,12 @@ class EvidenceRecord {
       latitude: (json['gps_lat'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['gps_lng'] as num?)?.toDouble() ?? 0.0,
       address: json['location_name'] as String?,
-      testResult: _parseTestResult(json['result'] as String? ?? 'NEGATIVE'),
+      testResult: _parseTestResult(json['result'] as String? ?? json['test_result'] as String? ?? 'NEGATIVE'),
       substance: json['substance'] as String?,
-      confidence: (json['confidence_score'] as num?)?.toDouble() ?? 0.0,
+      testKitType: json['test_kit_type'] as String?,
+      sampleId: json['sample_id'] as String?,
+      notes: json['notes'] as String?,
+      confidence: (json['confidence_score'] as num?)?.toDouble() ?? (json['confidence'] as num?)?.toDouble() ?? 0.0,
       imageHash: json['sha256_hash'] as String? ?? json['image_hash'] as String? ?? '',
       previousHash: json['prev_block_hash'] as String? ?? json['previous_hash'] as String? ?? '',
       recordHash: json['merkle_root'] as String? ?? json['record_hash'] as String? ?? '',
@@ -118,6 +127,11 @@ class EvidenceRecord {
       'address': address ?? '',
       'test_result': testResult.name.toUpperCase(),
       'substance': substance ?? '',
+      'test_kit_type': testKitType,
+      'sample_id': sampleId,
+      'sample_type': 'Unknown', // Need to add field later if required
+      'is_sealed': isSealed,
+      'notes': notes,
       'confidence': confidence,
       'image_hash': imageHash,
       'previous_hash': previousHash,

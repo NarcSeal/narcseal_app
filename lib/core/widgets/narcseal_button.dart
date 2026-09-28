@@ -156,7 +156,7 @@ class _NarcSealButtonState extends State<NarcSealButton> with SingleTickerProvid
               ? null
               : [
                   BoxShadow(
-                    color: NarcSealColors.accentCyanGlow, // which is now silver glow
+                    color: NarcSealColors.olive.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   )
@@ -179,7 +179,7 @@ class _NarcSealButtonState extends State<NarcSealButton> with SingleTickerProvid
       case ButtonVariant.ghost:
         return BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: NarcSealColors.bgGunmetal,
+          color: NarcSealColors.warmOffWhite,
           border: Border.all(
             color: isDisabled ? Colors.grey.shade800 : NarcSealColors.borderSubtle,
             width: 1,

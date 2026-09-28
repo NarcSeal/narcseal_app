@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'core/theme/narcseal_theme.dart';
 import 'core/theme/night_ops_theme.dart';
+import 'core/theme/colors.dart';
 import 'services/theme_service.dart';
 import 'navigation/app_router.dart';
 
@@ -14,13 +15,13 @@ void main() {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Set system status bar / nav bar to match the dark theme
+  // Set system status bar / nav bar to match the light theme
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF111827), // bgSurface
-      systemNavigationBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: NarcSealColors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
 
@@ -28,8 +29,6 @@ void main() {
 }
 
 /// Root widget for the NarcSeal forensic drug test evidence sealing app.
-///
-/// "Every Test Sealed. Every Result Defensible."
 class NarcSealApp extends StatefulWidget {
   const NarcSealApp({super.key});
 
@@ -61,9 +60,9 @@ class _NarcSealAppState extends State<NarcSealApp> {
     return MaterialApp(
       title: 'NarcSeal',
       debugShowCheckedModeBanner: false,
-      theme: _themeService.isNightOps
-          ? NightOpsTheme.theme()
-          : NarcSealTheme.darkTheme(),
+      theme: NarcSealTheme.lightTheme(),
+      darkTheme: NightOpsTheme.theme(),
+      themeMode: _themeService.isNightOps ? ThemeMode.dark : ThemeMode.light,
       initialRoute: AppRoutes.splash,
       onGenerateRoute: AppRouter.generateRoute,
     );

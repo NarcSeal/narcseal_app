@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:video_player/video_player.dart';
 import 'package:uuid/uuid.dart';
 
+import '../core/theme/colors.dart';
+import '../core/theme/typography.dart';
+import '../navigation/app_router.dart';
 import '../services/api_service.dart';
 import '../models/evidence_record.dart';
 import '../models/test_result.dart';
@@ -16,70 +17,45 @@ class EvidenceSealScreen extends StatefulWidget {
 }
 
 class _EvidenceSealScreenState extends State<EvidenceSealScreen> {
-  late VideoPlayerController _videoController;
-  bool _animationFinished = false;
+  final TextEditingController _sealIdController = TextEditingController();
   String _resultType = 'POSITIVE';
-  bool _initialized = false;
   bool _isSyncing = false;
-  bool _syncSuccess = false;
-  String _recordId = const Uuid().v4();
+  final String _recordId = const Uuid().v4();
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_initialized) {
-      final args = ModalRoute.of(context)?.settings.arguments as Map?;
-      if (args != null && args['result'] != null) {
-        _resultType = args['result'] as String;
-      }
-      _initVideo();
-      _initialized = true;
+    final args = ModalRoute.of(context)?.settings.arguments as Map?;
+    if (args != null && args['result'] != null) {
+      _resultType = args['result'] as String;
     }
   }
 
-  void _initVideo() {
-    _videoController = VideoPlayerController.asset('assets/videos/tamper_proof.mp4')
-      ..initialize().then((_) {
-        _videoController.setLooping(false);
-        _videoController.play();
-        if (mounted) setState(() {});
-
-        _videoController.addListener(() {
-          if (!_videoController.value.isInitialized) return;
-
-          final duration = _videoController.value.duration;
-          final position = _videoController.value.position;
-
-          // Ensure duration is actually loaded and position has reached it
-          if (duration > Duration.zero && position >= duration) {
-            if (!_animationFinished && mounted) {
-              setState(() {
-                _animationFinished = true;
-              });
-              _syncRecord();
-            }
-          }
-        });
-      });
+  @override
+  void dispose() {
+    _sealIdController.dispose();
+    super.dispose();
   }
 
-  Future<void> _syncRecord() async {
+  Future<void> _verifyAndSeal() async {
+    HapticFeedback.heavyImpact();
     setState(() => _isSyncing = true);
+    
     final officer = ApiService.currentOfficer;
     final record = EvidenceRecord(
       recordId: _recordId,
       officerBadgeId: officer.badgeId,
       officerName: officer.fullName,
       timestamp: DateTime.now(),
-      latitude: 28.6139, // mock gps
-      longitude: 77.2090, // mock gps
+      latitude: 28.6139, 
+      longitude: 77.2090, 
       address: 'Connaught Place, New Delhi',
       testResult: _resultType == 'POSITIVE' ? TestResult.positive : (_resultType == 'NEGATIVE' ? TestResult.negative : TestResult.inconclusive),
       substance: _resultType == 'POSITIVE' ? 'Cocaine Hydrochloride' : (_resultType == 'NEGATIVE' ? 'No Narcotics Detected' : 'Unknown Substance'),
-      confidence: 0.98,
+      confidence: 0.998,
       imageHash: '8f4b0292193b092a101b0f92223a9109',
       previousHash: '2c99a0928bb019f2a991b11b',
-      recordHash: '2c99a0928bb019f2a991b11b',
+      recordHash: '8F4C299A0928BB019F2A991B11B',
       deviceId: 'DEVICE-1029',
       isSynced: false,
       isSealed: true,
@@ -87,265 +63,178 @@ class _EvidenceSealScreenState extends State<EvidenceSealScreen> {
     );
 
     final success = await ApiService.uploadTestRecord(record);
+    
     if (mounted) {
-      setState(() {
-        _isSyncing = false;
-        _syncSuccess = success;
-      });
+      setState(() => _isSyncing = false);
+      
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Evidence Sealed and Synced Successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Evidence Sealed locally. Sync failed.')),
+        );
+      }
+      
+      // Route back to home
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
     }
-  }
-
-  @override
-  void dispose() {
-    _videoController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // Sealing Animation
-          if (_videoController.value.isInitialized && !_animationFinished)
-            Positioned.fill(
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: _videoController.value.size.width,
-                  height: _videoController.value.size.height,
-                  child: VideoPlayer(_videoController),
-                ),
-              ),
+      backgroundColor: NarcSealColors.warmOffWhite,
+      appBar: AppBar(
+        title: const Text('EVIDENCE SEALING'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Image.asset(
+              'assets/images/branding/narcseal_logo.png',
+              height: 28,
+              errorBuilder: (c, e, s) => const Icon(Icons.security, color: NarcSealColors.titaniumGray),
             ),
-
-          // Certificate Screen (Fades in after animation)
-          IgnorePointer(
-            ignoring: !_animationFinished,
-            child: AnimatedOpacity(
-              opacity: _animationFinished ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 800),
-              child: _buildCertificate(),
-            ),
-          ),
+          )
         ],
       ),
-    );
-  }
-
-  Widget _buildCertificate() {
-    Color themeColor = _resultType == 'POSITIVE' 
-        ? Colors.redAccent 
-        : (_resultType == 'NEGATIVE' ? Colors.greenAccent : Colors.amber);
-
-    return SafeArea(
-      child: Column(
-        children: [
-          // App Bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
-                ),
-                Text(
-                  'EVIDENCE CERTIFICATE',
-                  style: GoogleFonts.orbitron(
-                    color: const Color(0xFFD4AF37),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 48), // Balance
-              ],
-            ),
-          ),
-          
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Container(
-                padding: const EdgeInsets.all(24.0),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Details Card
+              Container(
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF111111),
-                  border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.5), width: 2),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFD4AF37).withValues(alpha: 0.1),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    )
-                  ]
+                  color: NarcSealColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: NarcSealColors.lightBeige),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'RECORD ID',
-                          style: GoogleFonts.inter(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _isSyncing ? Colors.blue.withValues(alpha: 0.2) : (_syncSuccess ? Colors.green.withValues(alpha: 0.2) : Colors.orange.withValues(alpha: 0.2)),
-                            border: Border.all(color: _isSyncing ? Colors.blueAccent : (_syncSuccess ? Colors.greenAccent : Colors.orangeAccent)),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            _isSyncing ? 'SYNCING...' : (_syncSuccess ? 'SYNCED & VERIFIED' : 'LOCAL ONLY'),
-                            style: GoogleFonts.inter(
-                              color: _isSyncing ? Colors.blueAccent : (_syncSuccess ? Colors.greenAccent : Colors.orangeAccent), 
-                              fontSize: 10, 
-                              fontWeight: FontWeight.bold
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _recordId.split('-').first.toUpperCase(),
-                      style: GoogleFonts.jetBrainsMono(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const Divider(color: Colors.white24, height: 32),
-                    
-                    _buildDetailRow('OFFICER', 'Insp. Sharma (NCB-4421)'),
+                    Text('Sample ID', style: NarcSealTypography.metadata),
+                    Text('NS-2026-004282', style: NarcSealTypography.body.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 16),
-                    _buildDetailRow('DATE / TIME', 'Oct 24, 2026 - 14:32:05'),
+                    
+                    Text('GPS Location', style: NarcSealTypography.metadata),
+                    Text('28.6139° N, 77.2090° E', style: NarcSealTypography.body.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 16),
-                    _buildDetailRow('LOCATION', '28.6139° N, 77.2090° E\nConnaught Place, New Delhi'),
                     
-                    const Divider(color: Colors.white24, height: 32),
-                    
+                    Text('Hash', style: NarcSealTypography.metadata),
                     Text(
-                      'TEST RESULT',
-                      style: GoogleFonts.inter(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold),
+                      '8F4C299A0928BB019F2A991B11B', 
+                      style: NarcSealTypography.metadata.copyWith(
+                        color: NarcSealColors.graphite,
+                        fontWeight: FontWeight.w500,
+                      )
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 24),
+                    
+                    // Status Badge
                     Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: themeColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: themeColor.withValues(alpha: 0.5)),
+                        color: const Color(0xFFFFF8E1), // Light Amber
+                        border: Border.all(color: Colors.amber),
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Column(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
+                          const Icon(Icons.warning_amber_rounded, size: 14, color: Colors.amber),
+                          const SizedBox(width: 8),
                           Text(
-                            _resultType,
-                            style: GoogleFonts.orbitron(color: themeColor, fontSize: 24, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _resultType == 'POSITIVE' ? 'Cocaine Hydrochloride' : (_resultType == 'NEGATIVE' ? 'No Narcotics Detected' : 'Unknown Substance'),
-                            style: GoogleFonts.inter(color: Colors.white, fontSize: 16),
+                            'Digital Signature Pending',
+                            style: NarcSealTypography.label.copyWith(
+                              color: Colors.amber.shade800,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
                     ),
-
-                    const Divider(color: Colors.white24, height: 32),
-
-                    _buildHashRow('IMAGE HASH (SHA-256)', '0x8f4b...3a91'),
-                    const SizedBox(height: 16),
-                    _buildHashRow('MERKLE CHAIN HASH', '0x2c99...f11b'),
                   ],
                 ),
               ),
-            ),
+              
+              const SizedBox(height: 32),
+              
+              Text(
+                'Scan the NFC Evidence Bag or enter Seal ID manually.',
+                style: NarcSealTypography.body,
+                textAlign: TextAlign.center,
+              ),
+              
+              const SizedBox(height: 24),
+              
+              ElevatedButton(
+                onPressed: _isSyncing ? null : () {},
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.nfc, size: 20),
+                    const SizedBox(width: 12),
+                    Text('SCAN NFC SEAL', style: NarcSealTypography.buttonText),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 32),
+              
+              Row(
+                children: [
+                  const Expanded(child: Divider()),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text('OR', style: NarcSealTypography.label),
+                  ),
+                  const Expanded(child: Divider()),
+                ],
+              ),
+              
+              const SizedBox(height: 32),
+              
+              TextField(
+                controller: _sealIdController,
+                style: NarcSealTypography.body,
+                decoration: InputDecoration(
+                  labelText: 'Manual Seal ID',
+                  labelStyle: NarcSealTypography.label,
+                  hintText: 'e.g. BAG-88392',
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              OutlinedButton(
+                onPressed: _isSyncing ? null : _verifyAndSeal,
+                child: _isSyncing 
+                  ? const SizedBox(
+                      height: 20, 
+                      width: 20, 
+                      child: CircularProgressIndicator(color: NarcSealColors.olive, strokeWidth: 2)
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.verified_outlined, size: 20),
+                        const SizedBox(width: 12),
+                        Text('VERIFY & SEAL', style: NarcSealTypography.buttonText.copyWith(color: NarcSealColors.titaniumGray)),
+                      ],
+                    ),
+              ),
+            ],
           ),
-          
-          // Action Buttons
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildActionButton(Icons.share, 'Share', () { HapticFeedback.lightImpact(); }),
-                _buildActionButton(Icons.picture_as_pdf, 'PDF', () { HapticFeedback.lightImpact(); }),
-                _buildActionButton(Icons.qr_code_2, 'QR', () { HapticFeedback.lightImpact(); }),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: GoogleFonts.inter(color: Colors.white, fontSize: 16),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHashRow(String label, String hash) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white12),
-          ),
-          child: Text(
-            hash,
-            style: GoogleFonts.jetBrainsMono(color: const Color(0xFF00B4D8), fontSize: 14),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButton(IconData icon, String label, VoidCallback onTap) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(30),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFF1A1A1A),
-              border: Border.all(color: Colors.white24),
-            ),
-            child: Icon(icon, color: Colors.white, size: 28),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: GoogleFonts.inter(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
-        ),
-      ],
     );
   }
 }

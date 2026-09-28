@@ -8,6 +8,14 @@ import 'package:flutter/material.dart';
 /// - Reduced text brightness to 60%
 /// - Screen brightness forced to minimum
 class ThemeService extends ChangeNotifier {
+  static final ThemeService _instance = ThemeService._internal();
+
+  factory ThemeService() {
+    return _instance;
+  }
+
+  ThemeService._internal();
+
   bool _isNightOps = false;
 
   /// Whether Night Ops mode is currently active.

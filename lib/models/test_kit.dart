@@ -16,4 +16,15 @@ class TestKit {
       waitTimeSeconds: json['wait_time_seconds'] as int,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TestKit && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
+
+  @override
+  String toString() => 'TestKit(id: $id, name: $name, waitTimeSeconds: $waitTimeSeconds)';
 }

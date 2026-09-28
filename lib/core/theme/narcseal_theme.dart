@@ -3,60 +3,76 @@ import 'colors.dart';
 import 'typography.dart';
 import '../constants/app_constants.dart';
 
-/// Standard theme for the NarcSeal application.
+/// Standard theme for the NarcSeal application based on the professional design system.
 class NarcSealTheme {
-  static ThemeData darkTheme() {
+  static ThemeData lightTheme() {
     return ThemeData(
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: NarcSealColors.bgAbyss,
-      colorScheme: const ColorScheme.dark(
-        primary: NarcSealColors.accentCyan,
-        error: NarcSealColors.resultPositiveText,
-        surface: NarcSealColors.bgSurface,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: NarcSealColors.warmOffWhite,
+      colorScheme: const ColorScheme.light(
+        primary: NarcSealColors.olive,
+        error: NarcSealColors.positive,
+        surface: NarcSealColors.white,
       ),
       cardTheme: CardThemeData(
-        color: NarcSealColors.bgSurface,
+        color: NarcSealColors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-          side: const BorderSide(color: NarcSealColors.borderSubtle, width: 1),
+          side: const BorderSide(color: NarcSealColors.lightBeige, width: 1),
         ),
-        elevation: AppConstants.cardElevation,
+        elevation: 0,
+        margin: EdgeInsets.zero,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+            borderRadius: BorderRadius.circular(AppConstants.borderRadiusSmall),
           ),
           minimumSize: const Size(double.infinity, AppConstants.minTouchTarget),
-          backgroundColor: NarcSealColors.accentCyan,
-          foregroundColor: NarcSealColors.bgAbyss,
+          backgroundColor: NarcSealColors.olive,
+          foregroundColor: NarcSealColors.white,
+          elevation: 0,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.borderRadiusSmall),
+          ),
+          side: const BorderSide(color: NarcSealColors.titaniumGray),
+          foregroundColor: NarcSealColors.titaniumGray,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: NarcSealColors.bgElevated,
+        fillColor: NarcSealColors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-          borderSide: const BorderSide(color: NarcSealColors.borderSubtle, width: 1),
+          borderRadius: BorderRadius.circular(AppConstants.borderRadiusSmall),
+          borderSide: const BorderSide(color: NarcSealColors.paleOlive, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-          borderSide: const BorderSide(color: NarcSealColors.chromeHighlight, width: 2),
+          borderRadius: BorderRadius.circular(AppConstants.borderRadiusSmall),
+          borderSide: const BorderSide(color: NarcSealColors.olive, width: 2),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-          borderSide: const BorderSide(color: NarcSealColors.borderSubtle, width: 1),
+          borderRadius: BorderRadius.circular(AppConstants.borderRadiusSmall),
+          borderSide: const BorderSide(color: NarcSealColors.paleOlive, width: 1),
         ),
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
+      appBarTheme: AppBarTheme(
+        backgroundColor: NarcSealColors.warmOffWhite,
         elevation: 0,
-        iconTheme: IconThemeData(color: NarcSealColors.textPrimary),
+        iconTheme: const IconThemeData(color: NarcSealColors.titaniumGray),
+        centerTitle: true,
+        titleTextStyle: NarcSealTypography.screenTitle,
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: NarcSealColors.bgSurface,
-        selectedItemColor: NarcSealColors.chromeHighlight,
-        unselectedItemColor: NarcSealColors.textMuted,
+        backgroundColor: NarcSealColors.white,
+        selectedItemColor: NarcSealColors.olive,
+        unselectedItemColor: NarcSealColors.graphite,
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
       ),
       textTheme: TextTheme(
         displayLarge: NarcSealTypography.resultText,
@@ -69,10 +85,11 @@ class NarcSealTheme {
         labelSmall: NarcSealTypography.navLabel,
       ),
       dividerTheme: const DividerThemeData(
-        color: NarcSealColors.borderSubtle,
+        color: NarcSealColors.paleOlive,
+        thickness: 1,
       ),
       iconTheme: const IconThemeData(
-        color: NarcSealColors.textSecondary,
+        color: NarcSealColors.titaniumGray,
       ),
     );
   }
