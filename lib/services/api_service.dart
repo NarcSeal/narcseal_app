@@ -8,8 +8,8 @@ import '../models/evidence_record.dart';
 import '../models/test_kit.dart';
 
 class ApiService {
-  // Use localhost for Web, 127.0.0.1 for mobile via USB adb reverse
-  static const String baseUrl = kIsWeb ? 'http://localhost:8080/api/v1' : 'http://127.0.0.1:8080/api/v1';
+  // Use localhost for Web, 192.168.1.6 for mobile via local Wi-Fi
+  static const String baseUrl = kIsWeb ? 'http://localhost:8080/api/v1' : 'http://192.168.1.6:8080/api/v1';
   static const _storage = FlutterSecureStorage();
 
   // Current logged in officer cache
